@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscar DNI - API Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, .1);
+      width: 100%;
+      max-width: 600px;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 4px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .2);
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    button:disabled {
+      background: #93a9d6;
+      cursor: not-allowed;
+    }
+
+    #error {
+      color: #dc2626;
+      margin-top: 16px;
+      padding: 12px;
+      background: #fef2f2;
+      border-radius: 8px;
+      display: none;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      display: none;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f9fafb;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background: #f9fafb;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Buscar DNI por Nombre</h1>
+    <form id="form">
+      <label for="nombres">Nombres</label>
+    <input id="nombres" name="nombres" placeholder="Ej: PEDRO" required autofocus>
+    <label for="apellido_paterno">Apellido Paterno</label>
+    <input id="apellido_paterno" name="apellido_paterno" placeholder="Ej: CASTILLO" required>
+    <label for="apellido_materno">Apellido Materno</label>
+    <input id="apellido_materno" name="apellido_materno" placeholder="Ej: TERRONES" required>
+      <button type="submit" id="btn">Buscar</button>
+    </form>
+    <div id="error"></div>
+    <table id="table">
+      <thead>
+        <tr>
+          <th>DNI</th>
+          <th>Nombres</th>
+          <th>Ap. Paterno</th>
+          <th>Ap. Materno</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <script>
+    const API_URL = `http://10.36.105.214:5000/api/buscar-dni`;
+    const form = document.getElementById("form");
+    const btn = document.getElementById("btn");
+    const tbody = document.getElementById("tbody");
+    const table = document.getElementById("table");
+    const errorDiv = document.getElementById("error");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorDiv.style.display = "none";
+      table.style.display = "none";
+      btn.disabled = true;
+      btn.textContent = "Buscando...";
+
+      const params = new URLSearchParams({
+        nombres: document.getElementById("nombres").value.trim().toUpperCase(),
+        apellido_paterno: document.getElementById("apellido_paterno").value.trim().toUpperCase(),
+        apellido_materno: document.getElementById("apellido_materno").value.trim().toUpperCase(),
+      });
+
+      try {
+        const res = await fetch(`${API_URL}?${params}`);
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          errorDiv.textContent = data.error || "Error al consultar";
+          errorDiv.style.display = "block";
+          return;
+        }
+
+        tbody.innerHTML = data.map(p => `
+      <tr><td>${p.od_dni}</td><td>${p.od_nombres}</td><td>${p.od_apaterno}</td><td>${p.od_amaterno}</td></tr>
+    `).join("");
+        table.style.display = "table";
+      } catch (err) {
+        errorDiv.textContent = "Error de conexión: " + err.message;
+        errorDiv.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Buscar";
+      }
+    });
+  </script>
+</body>
+
+</html>
